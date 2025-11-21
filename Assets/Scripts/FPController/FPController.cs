@@ -12,8 +12,14 @@ public class FPController : MonoBehaviour
     [SerializeField] float WalkSpeed = 3.5f;
     [SerializeField] float SprintSpeed = 8f;
 
-    public Vector3 CurrentVelocity { get; private set; }
-    public float CurrentSpeed { get; private set; }
+    [SerializeField] float JumpHeight = 2f;
+    public bool Sprinting
+    {
+        get
+        {
+            return SprintInput && CurrentSpeed > 0.1f;
+        }
+    }
 
     [Header("Looking Parameters")]
     public Vector2 LookSensitivity = new Vector2(0.1f, 0.1f);
@@ -31,6 +37,27 @@ public class FPController : MonoBehaviour
         }
     }
 
+    [Header("Canera Parameters")]
+    [SerializeField] float CameraNormalFOV = 60f;
+    [SerializeField] float CameraSprintFOV = 80f;
+    [SerializeField] float CameraFOVSmoothing = 1f;
+
+    float TargetCameraFOV
+    {
+        get
+        {
+            return Sprinting ? CameraSprintFOV : CameraNormalFOV;
+        }
+    }
+
+    [Header("Physics Paramters")]
+    [SerializeField] float GravityScale = 3f;
+
+    public float VerticalVelocity = 0f;
+    public Vector3 CurrentVelocity { get; private set; }
+    public float CurrentSpeed { get; private set; }
+
+    public bool IsGrounded => characterController.isGrounded;
 
     [Header("Input")]
     public Vector2 MoveInput;
@@ -56,11 +83,21 @@ public class FPController : MonoBehaviour
     {
         MoveUpdate();
         LookUpdate();
+        CameraUpdate();
     }
 
     #endregion
 
     #region Controller Methods
+
+    public void TryJump()
+    {
+        if (IsGrounded == false)
+        {
+            return;
+        }
+        VerticalVelocity = Mathf.Sqrt(JumpHeight * -2f * Physics.gravity.y * GravityScale);
+    }
 
     void MoveUpdate()
     {
@@ -77,10 +114,17 @@ public class FPController : MonoBehaviour
             CurrentVelocity = Vector3.MoveTowards(CurrentVelocity, Vector3.zero, Acceleration * Time.deltaTime);
         }
 
-        // gravity handling since i'm not using rigidbody
-        float verticalVelocity = Physics.gravity.y * 20f * Time.deltaTime;
+        if (IsGrounded && VerticalVelocity <= 0.01f)
+        {
+            VerticalVelocity = -3f;
+        }
+        else
+        {
+            // gravity handling since i'm not using rigidbody
+            VerticalVelocity += Physics.gravity.y * GravityScale * Time.deltaTime;
+        }
 
-        Vector3 fullVelocity = new Vector3(CurrentVelocity.x, verticalVelocity, CurrentVelocity.z);
+        Vector3 fullVelocity = new Vector3(CurrentVelocity.x, VerticalVelocity, CurrentVelocity.z);
 
         characterController.Move(fullVelocity * Time.deltaTime);
 
@@ -99,6 +143,20 @@ public class FPController : MonoBehaviour
 
         //look left and right
         transform.Rotate(Vector3.up * input.x);
+    }
+
+    void CameraUpdate()
+    {
+        float targetFOV = CameraNormalFOV;
+
+        if (Sprinting)
+        {
+            float speedRatio = CurrentSpeed / SprintSpeed;
+
+            targetFOV = Mathf.Lerp(CameraNormalFOV, CameraSprintFOV, speedRatio);
+        }
+
+        fpCamera.Lens.FieldOfView = Mathf.Lerp(fpCamera.Lens.FieldOfView, targetFOV, CameraFOVSmoothing * Time.deltaTime);
     }
 
     #endregion

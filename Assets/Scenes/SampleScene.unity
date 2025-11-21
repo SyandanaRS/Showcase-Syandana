@@ -154,9 +154,15 @@ MonoBehaviour:
   Acceleration: 20
   WalkSpeed: 3.5
   SprintSpeed: 8
+  JumpHeight: 2
   LookSensitivity: {x: 0.1, y: 0.1}
   PitchLimit: 85
   currentPitch: 0
+  CameraNormalFOV: 60
+  CameraSprintFOV: 70
+  CameraFOVSmoothing: 3
+  GravityScale: 3
+  VerticalVelocity: 0
   MoveInput: {x: 0, y: 0}
   LookInput: {x: 0, y: 0}
   SprintInput: 0

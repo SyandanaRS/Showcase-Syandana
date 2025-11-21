@@ -24,6 +24,14 @@ public class Player : MonoBehaviour
         FPController.SprintInput = value.isPressed;
     }
 
+    void OnJump(InputValue value)
+    {
+        if (value.isPressed)
+        {
+            FPController.TryJump();
+        }
+    }
+
     #endregion
 
     #region Unity Methods
