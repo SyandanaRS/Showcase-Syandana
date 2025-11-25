@@ -42,6 +42,27 @@ public class FPController : MonoBehaviour
     [SerializeField] float CameraSprintFOV = 80f;
     [SerializeField] float CameraFOVSmoothing = 1f;
 
+    [Header("Crouch & Slide Parameters")]
+    public float CrouchHeight = 1f;
+    public float StandHeight = 2f;
+
+    public float CrouchSpeed = 2f;
+    public float SlideStartForce = 10f;
+    public float SlideDecay = 8f;
+
+    private bool IsCrouching = false;
+    private bool IsSliding = false;
+
+    private Vector3 slideVelocity;
+
+    private Vector3 originalCenter;
+
+    [Header("Crouch Camera")]
+    [SerializeField] private float cameraStandHeight = 1.8f;
+    [SerializeField] private float cameraCrouchHeight = 1f;
+    [SerializeField] private float cameraLerpSpeed = 10f;
+
+
     float TargetCameraFOV
     {
         get
@@ -79,6 +100,11 @@ public class FPController : MonoBehaviour
         }
     }
 
+    void Start()
+    {
+        originalCenter = characterController.center;
+    }
+
     void Update()
     {
         MoveUpdate();
@@ -101,17 +127,37 @@ public class FPController : MonoBehaviour
 
     void MoveUpdate()
     {
-        Vector3 motion = transform.forward * MoveInput.y + transform.right * MoveInput.x;
-        motion.y = 0f;
-        motion.Normalize();
+        Vector3 motion;
 
-        if (motion.sqrMagnitude >= 0.01f)
+        // if sliding, ignore normal motion and use slide movement
+        if (IsSliding)
         {
-            CurrentVelocity = Vector3.MoveTowards(CurrentVelocity, motion * MaxSpeed, Acceleration * Time.deltaTime);
+            motion = slideVelocity;
+            slideVelocity = Vector3.Lerp(slideVelocity, Vector3.zero, SlideDecay * Time.deltaTime);
+
+            // if slowed down enough, stop sliding (should probably change the 0.5f to a variable to change slide distances)
+            if (slideVelocity.magnitude < 0.2f){
+                IsSliding = false;
+            }
         }
         else
         {
-            CurrentVelocity = Vector3.MoveTowards(CurrentVelocity, Vector3.zero, Acceleration * Time.deltaTime);
+            // normal movement
+            motion = transform.forward * MoveInput.y + transform.right * MoveInput.x;
+            motion.y = 0f;
+            motion.Normalize();
+
+            // adjust speed when crouching
+            float targetSpeed = IsCrouching ? CrouchSpeed : MaxSpeed;
+
+            if (motion.sqrMagnitude >= 0.01f)
+            {
+                CurrentVelocity = Vector3.MoveTowards(CurrentVelocity, motion * targetSpeed, Acceleration * Time.deltaTime);
+            }
+            else
+            {
+                CurrentVelocity = Vector3.MoveTowards(CurrentVelocity, Vector3.zero, Acceleration * Time.deltaTime);
+            }
         }
 
         if (IsGrounded && VerticalVelocity <= 0.01f)
@@ -157,7 +203,52 @@ public class FPController : MonoBehaviour
         }
 
         fpCamera.Lens.FieldOfView = Mathf.Lerp(fpCamera.Lens.FieldOfView, targetFOV, CameraFOVSmoothing * Time.deltaTime);
+
+        float targetCamHeight = IsCrouching ? cameraCrouchHeight : cameraStandHeight;
+
+        Vector3 localPos = fpCamera.transform.localPosition;
+        localPos.y = Mathf.Lerp(localPos.y, targetCamHeight, cameraLerpSpeed * Time.deltaTime);
+        fpCamera.transform.localPosition = localPos;
     }
+
+    #region Crouching & Sliding
+    public void StartCrouch()
+    {
+        if (Sprinting && CurrentSpeed > WalkSpeed * 1.2f)
+        {
+            IsSliding = true;
+            slideVelocity = CurrentVelocity + transform.forward * SlideStartForce;
+        }
+
+        IsCrouching = true;
+
+        characterController.height = CrouchHeight;
+        characterController.center = new Vector3(
+            originalCenter.x,
+            CrouchHeight / 2f,
+            originalCenter.z);
+    }
+
+    public void StopCrouch()
+    {
+        // if (!CanStand())
+        // {
+        //     return;
+        // }
+
+        IsCrouching = false;
+        IsSliding = false;
+
+        characterController.height = StandHeight;
+        characterController.center = originalCenter;
+    }
+
+    bool CanStand()
+    {
+        return !Physics.Raycast(transform.position, Vector3.up, StandHeight - CrouchHeight + 0.1f);
+    }
+
+    #endregion
 
     #endregion
 }

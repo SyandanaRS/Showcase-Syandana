@@ -32,6 +32,18 @@ public class Player : MonoBehaviour
         }
     }
 
+    void OnCrouch(InputValue value)
+    {
+        Debug.Log("CROUCH INPUT: " + value.isPressed);
+        if (value.isPressed)
+        {
+            FPController.StartCrouch();
+        } else
+        {
+            FPController.StopCrouch();
+        }
+    }
+
     #endregion
 
     #region Unity Methods
