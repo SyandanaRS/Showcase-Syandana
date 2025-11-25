@@ -44,6 +44,11 @@ public class Player : MonoBehaviour
         }
     }
 
+    void OnAttack(InputValue value)
+    {
+        
+    }
+
     #endregion
 
     #region Unity Methods
