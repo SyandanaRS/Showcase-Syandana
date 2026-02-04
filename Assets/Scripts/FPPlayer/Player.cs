@@ -6,6 +6,8 @@ public class Player : MonoBehaviour
 {
     [Header("Components")]
     [SerializeField] FPController FPController;
+    [SerializeField] GunController GunController;
+    bool isFiring;
 
     #region Input Handling
 
@@ -46,7 +48,16 @@ public class Player : MonoBehaviour
 
     void OnAttack(InputValue value)
     {
-        
+        isFiring = value.isPressed;
+        GunController.SetFiring(isFiring);
+    }
+
+    void OnReload(InputValue value)
+    {
+        if (value.isPressed)
+        {
+            GunController.Reload();
+        }
     }
 
     #endregion
@@ -56,12 +67,21 @@ public class Player : MonoBehaviour
     void OnValidate()
     {
         if (FPController == null) FPController = GetComponent<FPController>();
+        if (GunController == null) GunController = GetComponent<GunController>();
     }
 
     void Start()
     {
         Cursor.visible = false;
         Cursor.lockState = CursorLockMode.Locked;
+    }
+
+    void Update()
+    {
+        if (isFiring)
+        {
+            GunController.TryShoot();
+        }
     }
     #endregion
 

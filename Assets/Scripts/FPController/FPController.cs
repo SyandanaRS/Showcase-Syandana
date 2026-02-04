@@ -180,16 +180,37 @@ public class FPController : MonoBehaviour
 
     void LookUpdate()
     {
-        Vector2 input = new Vector2(LookInput.x * LookSensitivity.x, LookInput.y * LookSensitivity.y);
+        Vector2 input = new Vector2(
+            LookInput.x * LookSensitivity.x,
+            LookInput.y * LookSensitivity.y
+        );
 
-        //look up and down
+        // mouse look (PLAYER CONTROL)
         CurrentPitch -= input.y;
-
-        fpCamera.transform.localRotation = Quaternion.Euler(CurrentPitch, 0f, 0f);
-
-        //look left and right
         transform.Rotate(Vector3.up * input.x);
-    }
+
+        // recoil smoothing
+        targetRecoil = Vector2.Lerp(
+            targetRecoil,
+            Vector2.zero,
+            recoilReturnSpeed * Time.deltaTime
+        );
+
+        currentRecoil = Vector2.Lerp(
+            currentRecoil,
+            targetRecoil,
+            recoilSnappiness * Time.deltaTime
+        );
+
+        // apply recoil ONLY to camera
+        float finalPitch = CurrentPitch - currentRecoil.y;
+        float recoilYaw = currentRecoil.x;
+
+        fpCamera.transform.localRotation =
+            Quaternion.Euler(finalPitch, recoilYaw, 0f);
+}
+
+
 
     void CameraUpdate()
     {
@@ -251,4 +272,22 @@ public class FPController : MonoBehaviour
     #endregion
 
     #endregion
+
+    [Header("Recoil")]
+    public float recoilKickUp = 0.05f;
+    public float recoilKickSide = 0.025f;
+    public float recoilReturnSpeed = 18f;
+    public float recoilSnappiness = 8f;
+
+    Vector2 currentRecoil;
+    Vector2 targetRecoil;
+
+    public void AddRecoil()
+    {
+        float vertical = recoilKickUp;
+        float horizontal = Random.Range(-recoilKickSide, recoilKickSide);
+
+        targetRecoil += new Vector2(horizontal, vertical);
+    }
+
 }
