@@ -50,7 +50,7 @@ public class GunController : MonoBehaviour
 
     void Shoot()
     {
-        if (!AmmoController.HasAmmo())
+        if (!AmmoController.HasAmmoInMag())
         {
             return;
         }
@@ -85,11 +85,16 @@ public class GunController : MonoBehaviour
         {
             Debug.Log("Hit: " + hit.collider.name);
         }
+
+        PlayerHealth.Instance.TakeDamage(10);
     }
 
     public void Reload()
     {
         if (isReloading) return;
+
+        if (!AmmoController.CanReload()) return;
+
         isReloading = true;
 
         if(magazineAnimator != null)
@@ -122,7 +127,7 @@ public class GunController : MonoBehaviour
 
     crosshair.localScale = crosshairCurrentScale;
 
-    if (isFiring && AmmoController.currentAmmo <= 0)
+    if (isFiring && AmmoController.currentMagAmmo <= 0)
         {
             SetFiring(false);
         }

@@ -13,6 +13,7 @@ public class FPController : MonoBehaviour
     [SerializeField] float SprintSpeed = 8f;
 
     [SerializeField] float JumpHeight = 2f;
+    [SerializeField] PauseMenu PauseMenu;
     public bool Sprinting
     {
         get
@@ -107,6 +108,8 @@ public class FPController : MonoBehaviour
 
     void Update()
     {
+        if(PauseMenu.isPaused) return;
+        if(!PlayerHealth.Instance.playerAlive) return;
         MoveUpdate();
         LookUpdate();
         CameraUpdate();

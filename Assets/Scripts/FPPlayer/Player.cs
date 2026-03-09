@@ -7,6 +7,7 @@ public class Player : MonoBehaviour
     [Header("Components")]
     [SerializeField] FPController FPController;
     [SerializeField] GunController GunController;
+    [SerializeField] PauseMenu PauseMenu;
     bool isFiring;
 
     #region Input Handling
@@ -57,6 +58,20 @@ public class Player : MonoBehaviour
         if (value.isPressed)
         {
             GunController.Reload();
+        }
+    }
+
+    void OnPause(InputValue value)
+    {
+        if (value.isPressed)
+        {
+            if (PauseMenu.isPaused)
+            {
+                PauseMenu.Instance.Resume();
+            } else
+            {
+                PauseMenu.Instance.Pause();
+            }
         }
     }
 
