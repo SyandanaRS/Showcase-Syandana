@@ -42,4 +42,9 @@ public class AmmoController : MonoBehaviour
         currentMagAmmo += bulletsToReload;
         currentReserveAmmo -= bulletsToReload;
     }
+
+    public static void AddAmmo(int amount)
+    {
+        currentReserveAmmo += amount;
+    }
 }
