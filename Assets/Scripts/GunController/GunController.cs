@@ -86,7 +86,8 @@ public class GunController : MonoBehaviour
             Debug.Log("Hit: " + hit.collider.name);
         }
 
-        PlayerHealth.Instance.TakeDamage(10);
+        // test player health
+        // PlayerHealth.Instance.TakeDamage(10);
     }
 
     public void Reload()
